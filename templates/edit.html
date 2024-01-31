@@ -1,0 +1,23 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+<title>Edit Expense</title>
+</head>
+<body>
+<h1>Edit Expense</h1>
+<form action="{{ url_for('edit', id=expense.id) }}" method="POST">
+<label for="name">Name:</label>
+<input type="text" name="name" id="name" value="{{ expense.name }}">
+<br>
+<label for="amount">Amount:</label>
+<input type="text" name="amount" id="amount" value="{{ expense.amount }}">
+<br>
+<label for="category">Category:</label>
+<input type="text" name="category" id="category" value="{{ expense.category }}">
+<br>
+<input type="submit" value="Save">
+</form>
+</body>
+</html>
+
