@@ -1,81 +1,61 @@
- 
+
+# Import necessary modules
 from flask import Flask, render_template, request, redirect, url_for
 from flask_sqlalchemy import SQLAlchemy
 
+# Create a Flask app
 app = Flask(__name__)
+
+# Configure the database
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///expenses.db'
 db = SQLAlchemy(app)
 
+# Define the Expense model
 class Expense(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    amount = db.Column(db.Float, nullable=False)
-    category = db.Column(db.String(80), nullable=False)
-    date = db.Column(db.Date, nullable=False)
+    name = db.Column(db.String(80))
+    amount = db.Column(db.Float)
+    category = db.Column(db.String(50))
 
-    def __repr__(self):
-        return '<Expense %r>' % self.id
+# Create the database tables
+db.create_all()
 
-class Category(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(80), unique=True, nullable=False)
-
-    def __repr__(self):
-        return '<Category %r>' % self.name
-
+# Define the home page
 @app.route('/')
-def index():
+def home():
     expenses = Expense.query.all()
-    return render_template('index.html', expenses=expenses)
+    return render_template('home.html', expenses=expenses)
 
-@app.route('/add_expense', methods=['GET', 'POST'])
-def add_expense():
+# Define the route to add a new expense
+@app.route('/add', methods=['GET', 'POST'])
+def add():
     if request.method == 'POST':
-        amount = request.form['amount']
-        category = request.form['category']
-        date = request.form['date']
-
-        expense = Expense(amount=amount, category=category, date=date)
+        expense = Expense(name=request.form['name'], amount=request.form['amount'], category=request.form['category'])
         db.session.add(expense)
         db.session.commit()
+        return redirect(url_for('home'))
+    return render_template('add.html')
 
-        return redirect(url_for('index'))
-
-    return render_template('add_expense.html')
-
-@app.route('/edit_expense/<int:expense_id>', methods=['GET', 'POST'])
-def edit_expense(expense_id):
-    expense = Expense.query.get_or_404(expense_id)
-
+# Define the route to edit an expense
+@app.route('/edit/<int:id>', methods=['GET', 'POST'])
+def edit(id):
+    expense = Expense.query.get_or_404(id)
     if request.method == 'POST':
-        amount = request.form['amount']
-        category = request.form['category']
-        date = request.form['date']
-
-        expense.amount = amount
-        expense.category = category
-        expense.date = date
+        expense.name = request.form['name']
+        expense.amount = request.form['amount']
+        expense.category = request.form['category']
         db.session.commit()
+        return redirect(url_for('home'))
+    return render_template('edit.html', expense=expense)
 
-        return redirect(url_for('index'))
-
-    return render_template('edit_expense.html', expense=expense)
-
-@app.route('/delete_expense/<int:expense_id>')
-def delete_expense(expense_id):
-    expense = Expense.query.get_or_404(expense_id)
+# Define the route to delete an expense
+@app.route('/delete/<int:id>')
+def delete(id):
+    expense = Expense.query.get_or_404(id)
     db.session.delete(expense)
     db.session.commit()
+    return redirect(url_for('home'))
 
-    return redirect(url_for('index'))
-
-@app.route('/categories')
-def categories():
-    categories = Category.query.all()
-    return render_template('categories.html', categories=categories)
-
-@app.route('/reports')
-def reports():
-    return render_template('reports.html')
-
+# Run the app
 if __name__ == '__main__':
-    app.run()
+    app.run(debug=True)
